@@ -241,7 +241,7 @@
                 </div>
               </div> -->
               <!-- Order Statistics -->
-              <div class="col-md-6 col-lg-4 col-xl-4 order-0 mb-4">
+              <!-- <div class="col-md-6 col-lg-4 col-xl-4 order-0 mb-4">
                 <div class="card h-100">
                   <div class="card-header d-flex align-items-center justify-content-between pb-0">
                     <div class="card-title mb-0">
@@ -271,7 +271,7 @@
 
                   </div>
                 </div>
-              </div>
+              </div> -->
               <!--/ Order Statistics -->
               <div class="col-lg-4 col-md-4 order-1">
                 <div class="row">
@@ -318,7 +318,7 @@
                           </div>
                         </div>
                         <span class="fw-semibold d-block mb-1">Completed Tasks</span>
-                        <h3 class="card-title text-nowrap mb-1">10</h3>
+                        <h3 id="tvTalCompletedTask" class="card-title text-nowrap mb-1">10</h3>
                         <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i> +28.42%</small>
                       </div>
                     </div>
@@ -541,13 +541,7 @@
 
     var dbEmployees = firebase.database().ref("Employees");
     dbEmployees.once("value").then(function (AllEmps) {
-      AllEmps.forEach(function (snapshot) {
-        console.log("total employess " + snapshot.numChildren());
-        document.getElementById("tvTotalEmp").innerHTML = snapshot.numChildren();
-        $("#empSelect").append(
-          "<option value='" + snapshot.key + "'>" + snapshot.val().name + "</option>"
-        );
-      });
+      document.getElementById("tvTotalEmp").innerHTML = AllEmps.numChildren();      
     });
 
 
@@ -671,9 +665,10 @@
 
     var dbComTask = firebase.database().ref("CompletedTasks");
     dbComTask.on("value", function (snapshot) {
+      document.getElementById("tvTalCompletedTask").innerHTML = snapshot.numChildren();
       if (snapshot.exists()) {
         var myhtml = "";
-        snapshot.forEach(function (dataC) {
+        snapshot.forEach(function (dataC) {          
           console.log("completed tasks" + dataC.val().name)
           myhtml += "<tr>";
 

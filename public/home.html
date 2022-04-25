@@ -47,6 +47,10 @@
   <script src="https://www.gstatic.com/firebasejs/8.2.6/firebase-database.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.2.6/firebase-analytics.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.2.6/firebase-storage.js"></script>
+
+  <!-- table to exel -->
+  <script src="https://cdn.jsdelivr.net/gh/linways/table-to-excel@v1.0.4/dist/tableToExcel.js"></script>
+
 </head>
 
 <body>
@@ -276,8 +280,7 @@
                       <div class="card-body">
                         <div class="card-title d-flex align-items-start justify-content-between">
                           <div class="avatar flex-shrink-0">
-                            <img src="assets/img/icons/unicons/chart-success.png" alt="chart success"
-                              class="rounded" />
+                            <img src="assets/img/icons/unicons/chart-success.png" alt="chart success" class="rounded" />
                           </div>
                           <div class="dropdown">
                             <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown"
@@ -400,6 +403,38 @@
                 </div>
               </div>
               <!-- employee table -->
+              <hr class="style-eight">
+              <div class="card">
+                <div class="card-body">
+                  <div class="card-header d-flex align-items-center justify-content-between">
+                    <h4>Completed Task</h4>
+                    <button onclick="exportTable()" class="btn btn-primary">Export
+                      Report</button>
+                  </div>
+
+                  <div class="table-responsive text-nowrap">
+                    <table id="CompletedTaskTable" class="table table-striped">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Number</th>
+                          <th>Area</th>
+                          <th>Report</th>
+                          <th>Feedback</th>
+                          <th>Comment</th>
+                          <th>Recording</th>
+                          <th>Action</th>
+                          <th>Edit</td>
+                        </tr>
+                      </thead>
+                      <tbody id="CompleyedTaskBody"></tbody>
+                    </table>
+                  </div>
+                  <br><br>
+
+                </div>
+              </div>
 
               <hr class="style-eight">
 
@@ -418,20 +453,25 @@
                     </div>
                   </div>
                   <div class="table-responsive text-nowrap">
-                    <table class="table table-striped">
+                    <table id="taskTable" class="table table-striped">
                       <thead>
                         <tr>
                           <th>Name</th>
                           <th>Email</th>
                           <th>Number</th>
                           <th>Area</th>
+                          <th>Report</th>
+                          <th>Feedback</th>
+                          <th>Comment</th>
                           <th>Action</th>
                           <th>Edit</td>
                         </tr>
                       </thead>
                       <tbody id="taskTableBody"></tbody>
                     </table>
+
                   </div>
+                  <br><br>
                 </div>
               </div>
               <!-- task details table -->
@@ -473,6 +513,29 @@
         console.log("logging out")
         firebase.auth().signOut();
       });
+    }
+
+    function exportTable() {
+      var cTime = getFormattedTime();
+      console.log(cTime)
+      TableToExcel.convert(document.getElementById("CompletedTaskTable"), {
+        name:  "uask-" + cTime + "-" + "task.xlsx",
+        sheet: {
+          name: "uask-" + getFormattedTime + ""
+        }
+      });
+    }
+
+    function getFormattedTime() {
+      var today = new Date();
+      var y = today.getFullYear();
+      // JavaScript months are 0-based.
+      var m = today.getMonth() + 1;
+      var d = today.getDate();
+      var h = today.getHours();
+      var mi = today.getMinutes();
+      var s = today.getSeconds();
+      return d + "-" + m + "-" + y + "-" + h + "-" + mi;
     }
 
     var dbEmployees = firebase.database().ref("Employees");
@@ -520,13 +583,25 @@
             taskhtml += imagesSnapshot.val().area;
             taskhtml += "</td>";
 
+            taskhtml += "<td>";
+            taskhtml += imagesSnapshot.val().report;
+            taskhtml += "</td>";
+
+            taskhtml += "<td>";
+            taskhtml += imagesSnapshot.val().feedback;
+            taskhtml += "</td>";
+
+            taskhtml += "<td>";
+            taskhtml += imagesSnapshot.val().comment;
+            taskhtml += "</td>";
+
             //for category preview
             taskhtml += "<td>";
             taskhtml += imagesSnapshot.val().action;
             taskhtml += "</td>";
 
             //button for delete
-            taskhtml += `<td><button style="background-color: #d32f2f;" onclick='myfun("${this.value + '/' + imagesSnapshot.key}")' class='btn btn-default'>Delete</button>`;
+            taskhtml += `<td><button onclick='deleteTask("${empUid + '/' + imagesSnapshot.key}")' class='btn btn-danger'>Delete</button>`;
             taskhtml += "</td>";
 
           });
@@ -534,6 +609,21 @@
           $("#taskTableBody").append(taskhtml);
         }
       });
+    }
+
+    function deleteTask(path) {
+      var result = confirm("Confirm Delete");
+      if (result) {
+        firebase
+          .database()
+          .ref("Admins/" + path).remove().then(function () {
+            console.log("Remove succeeded.");
+            window.location.reload();
+          })
+          .catch(function (error) {
+            console.log("Remove failed: " + error.message)
+          });
+      }
     }
 
     function displayAllEmp() {
@@ -578,6 +668,64 @@
 
     window.onload = displayAllEmp();
 
+    var dbComTask = firebase.database().ref("CompletedTasks");
+    dbComTask.on("value", function (snapshot) {
+      if (snapshot.exists()) {
+        var myhtml = "";
+        snapshot.forEach(function (dataC) {
+          console.log("completed tasks" + dataC.val().name)
+          myhtml += "<tr>";
+
+          //for client name
+          myhtml += "<td>";
+          myhtml += dataC.val().name;
+          myhtml += "</td>";
+
+          //for client email
+          myhtml += "<td>";
+          myhtml += dataC.val().email;
+          myhtml += "</td>";
+
+          //for client number
+          myhtml += "<td>";
+          myhtml += dataC.val().number;
+          myhtml += "</td>";
+
+          //for client area
+          myhtml += "<td>";
+          myhtml += dataC.val().area;
+          myhtml += "</td>";
+
+          myhtml += "<td>";
+          myhtml += dataC.val().report;
+          myhtml += "</td>";
+
+          myhtml += "<td>";
+          myhtml += dataC.val().feedback;
+          myhtml += "</td>";
+
+          myhtml += "<td>";
+          myhtml += dataC.val().comment;
+          myhtml += "</td>";
+
+          myhtml += "<td>";
+          myhtml += dataC.val().file;
+          myhtml += "</td>";
+
+          //for category preview
+          myhtml += "<td>";
+          myhtml += dataC.val().action;
+          myhtml += "</td>";
+
+          //button for delete
+          myhtml += `<td><button onclick='deleteTask("${'/' + dataC.key}")' class='btn btn-danger'>Delete</button>`;
+          myhtml += "</td>";
+        });
+        $("#CompleyedTaskBody").html(myhtml);
+      }
+    })
+
+
     firebase.auth().onAuthStateChanged(function (user) {
       if (!user) {
         window.location.href = "index.html";
@@ -593,6 +741,10 @@
 
   <script src="assets/vendor/js/menu.js"></script>
   <!-- endbuild -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jplayer/2.9.2/jplayer/jquery.jplayer.min.js"
+    integrity="sha512-g0etrk7svX8WYBp+ZDIqeenmkxQSXjRDTr08ie37rVFc99iXFGxmD0/SCt3kZ6sDNmr8sR0ISHkSAc/M8rQBqg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <!-- Vendors JS -->
   <script src="assets/vendor/libs/apex-charts/apexcharts.js"></script>

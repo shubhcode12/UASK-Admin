@@ -432,7 +432,7 @@ $("#btnCreateEmp").click(function () {
               emphtml += "</td>";
 
               //for delete category
-              emphtml += `<td> <button onclick='delCatFunction("${'/' + category.val().key}")' class='btn btn-danger'>Delete</button>`;
+              emphtml += `<td> <button onclick='deleteEmployee("${'/' + category.key}")' class='btn btn-danger'>Delete</button>`;
               emphtml += "</td>";
               emphtml += "</tr>";
 
@@ -444,6 +444,34 @@ $("#btnCreateEmp").click(function () {
 
         });
       }
+
+      function deleteEmployee(path) {
+      var result = confirm("Confirm Delete Employee");
+      if (result) {
+
+        firebase
+          .database()
+          .ref("Admins/" + path).remove().then(function () {
+            console.log("Employee Tasks Remove succeeded.");
+            // window.location.reload();
+          })
+          .catch(function (error) {
+            console.log("Employee Tasks Remove failed: " + error.message)
+          });
+
+        firebase
+          .database()
+          .ref("Employees/" + path).remove().then(function () {
+            console.log("Employee Remove succeeded.");
+            // window.location.reload();
+          })
+          .catch(function (error) {
+            console.log("Employee Remove failed: " + error.message)
+          });
+
+
+      }
+    }
 
       window.onload = displayAllEmp();
     </script>

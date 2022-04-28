@@ -35,6 +35,9 @@
 
   <link rel="stylesheet" href="assets/vendor/libs/apex-charts/apex-charts.css" />
 
+  <!-- js pdf -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <!-- Page CSS -->
 
   <!-- Helpers -->
@@ -294,7 +297,7 @@
                           </div>
                         </div>
                         <span class="fw-semibold d-block mb-1">Pending Tasks</span>
-                        <h3 class="card-title mb-2">20</h3>
+                        <h3 class="card-title mb-2">0</h3>
                         <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i> +72.80%</small>
                       </div>
                     </div>
@@ -318,7 +321,7 @@
                           </div>
                         </div>
                         <span class="fw-semibold d-block mb-1">Completed Tasks</span>
-                        <h3 id="tvTalCompletedTask" class="card-title text-nowrap mb-1">10</h3>
+                        <h3 id="tvTalCompletedTask" class="card-title text-nowrap mb-1">0</h3>
                         <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i> +28.42%</small>
                       </div>
                     </div>
@@ -347,7 +350,7 @@
                           </div>
                         </div>
                         <span class="fw-semibold d-block mb-1">Total Tasks</span>
-                        <h3 class="card-title text-nowrap mb-2">500</h3>
+                        <h3 class="card-title text-nowrap mb-2">0</h3>
                         <small class="text-danger fw-semibold"><i class="bx bx-down-arrow-alt"></i> -14.82%</small>
                       </div>
                     </div>
@@ -371,7 +374,7 @@
                           </div>
                         </div>
                         <span class="fw-semibold d-block mb-1">Total Employee</span>
-                        <h3 id="tvTotalEmp" class="card-title mb-2">15</h3>
+                        <h3 id="tvTotalEmp" class="card-title mb-2">0</h3>
                         <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i> +28.14%</small>
                       </div>
                     </div>
@@ -403,13 +406,15 @@
                 </div>
               </div>
               <!-- employee table -->
+
               <hr class="style-eight">
+
+              <!-- all completed task table start -->
               <div class="card">
                 <div class="card-body">
                   <div class="card-header d-flex align-items-center justify-content-between">
                     <h4>Completed Task</h4>
-                    <button onclick="exportTable()" class="btn btn-primary">Export
-                      Report</button>
+
                   </div>
 
                   <div class="table-responsive text-nowrap">
@@ -436,13 +441,19 @@
 
                 </div>
               </div>
+              <!-- all completed task table end -->
 
               <hr class="style-eight">
 
-              <!-- task details table -->
+              <!-- task details table start-->
               <div class="card">
                 <div class="card-body">
-                  <h4>Task Details</h4>
+                  <div class="card-header d-flex align-items-center justify-content-between">
+                    <h4>Task Details</h4>
+                    <button onclick="exportTable()" class="btn btn-primary">Export
+                      Report</button>
+                  </div>
+
                   <div class="mt-2 mb-3">
                     <label for="empSelect" class="form-label">Select Employee</label>
                     <div class="input-group">
@@ -464,6 +475,7 @@
                           <th>Report</th>
                           <th>Feedback</th>
                           <th>Comment</th>
+                          <th>Recording</th>
                           <th>Action</th>
                           <th>Edit</td>
                         </tr>
@@ -475,7 +487,7 @@
                   <br><br>
                 </div>
               </div>
-              <!-- task details table -->
+              <!-- task details table end-->
 
 
             </div>
@@ -516,16 +528,7 @@
       });
     }
 
-    function exportTable() {
-      var cTime = getFormattedTime();
-      console.log(cTime)
-      TableToExcel.convert(document.getElementById("CompletedTaskTable"), {
-        name: "uask-" + cTime + "-" + "task.xlsx",
-        sheet: {
-          name: "uask-" + getFormattedTime + ""
-        }
-      });
-    }
+
 
     function getFormattedTime() {
       var today = new Date();
@@ -541,66 +544,102 @@
 
     var dbEmployees = firebase.database().ref("Employees");
     dbEmployees.once("value").then(function (AllEmps) {
-      document.getElementById("tvTotalEmp").innerHTML = AllEmps.numChildren();      
+      
     });
 
+    var dbEmployees = firebase.database().ref("Employees");
+    dbEmployees.once("value").then(function (AllEmps) {
+      AllEmps.forEach(function (snapshot) {
+        console.log("total employess " + snapshot.numChildren());
+        document.getElementById("tvTotalEmp").innerHTML = snapshot.numChildren();
+        $("#empSelect").append(
+          "<option value='" + snapshot.key + "'>" + snapshot.val().name + "</option>"
+        );
+      });
+    });
+
+    function exportTable() {
+      var cTime = getFormattedTime();
+      var sel = document.getElementById("empSelect");
+      var empName = sel.options[sel.selectedIndex].text;
+      console.log("Employee Name : " + empName)
+      TableToExcel.convert(document.getElementById("taskTableBody"), {
+        name: "uask-" + empName + "-" + cTime + "-" + "task.xlsx",
+        sheet: {
+          name: "uask-" + getFormattedTime + ""
+        }
+      });
+    }
 
     function getTaskByEmpUid() {
       var empUid = $("#empSelect").val();
       console.log("selected" + empUid);
 
       var db = firebase.database().ref("Admins").child(empUid);
-      db.on("value", function (task) {
-        if (task.exists()) {
-          var taskhtml = "";
-          task.forEach(function (imagesSnapshot) {
 
-            console.log(imagesSnapshot.val());
+      // db.orderByChild('action').equalTo('Completed').on("value", function (snapshot) {
+      //   console.log("only completed tasks are : " + snapshot.val());
+      //   snapshot.forEach(function (data) {
+
+      //   });
+      // });
+
+      db.on("value", function (task) {
+        if (task.exists()) {          
+          var taskhtml = "";
+          task.forEach(function (taskSnapshot) {
+
+            // console.log(taskSnapshot.val());
             taskhtml += "<tr>";
 
             //for client name
             taskhtml += "<td>";
-            taskhtml += imagesSnapshot.val().name;
+            taskhtml += taskSnapshot.val().name;
             taskhtml += "</td>";
 
             //for client email
             taskhtml += "<td>";
-            taskhtml += imagesSnapshot.val().email;
+            taskhtml += taskSnapshot.val().email;
             taskhtml += "</td>";
 
             //for client number
             taskhtml += "<td>";
-            taskhtml += imagesSnapshot.val().number;
+            taskhtml += taskSnapshot.val().number;
             taskhtml += "</td>";
 
             //for client area
             taskhtml += "<td>";
-            taskhtml += imagesSnapshot.val().area;
+            taskhtml += taskSnapshot.val().area;
             taskhtml += "</td>";
 
             taskhtml += "<td>";
-            taskhtml += imagesSnapshot.val().report;
+            taskhtml += taskSnapshot.val().report;
             taskhtml += "</td>";
 
             taskhtml += "<td>";
-            taskhtml += imagesSnapshot.val().feedback;
+            taskhtml += taskSnapshot.val().feedback;
             taskhtml += "</td>";
 
             taskhtml += "<td>";
-            taskhtml += imagesSnapshot.val().comment;
+            taskhtml += taskSnapshot.val().comment;
             taskhtml += "</td>";
 
-            //for category preview
             taskhtml += "<td>";
-            taskhtml += imagesSnapshot.val().action;
+            taskhtml += taskSnapshot.val().file;
+            taskhtml += "</td>";
+
+            //for empVal preview
+            taskhtml += "<td>";
+            taskhtml += taskSnapshot.val().action;
             taskhtml += "</td>";
 
             //button for delete
-            taskhtml += `<td><button onclick='deleteTask("${empUid + '/' + imagesSnapshot.key}")' class='btn btn-danger'>Delete</button>`;
+            taskhtml += `<td><button onclick='deleteTask("${empUid + '/' + taskSnapshot.key}")' class='btn btn-danger'>Delete</button>`;
             taskhtml += "</td>";
 
           });
 
+          $("#taskTableBody").html("");
           $("#taskTableBody").append(taskhtml);
         }
       });
@@ -627,28 +666,28 @@
       dbCategories.on("value", function (snapshot) {
 
         if (snapshot.exists()) {
+          document.getElementById("tvTotalEmp").innerHTML = snapshot.numChildren();
           var emphtml = "";
-          snapshot.forEach(function (category) {
-
+          snapshot.forEach(function (empVal) {
             emphtml += "<tr>";
 
             //for emp name
             emphtml += "<td>";
-            emphtml += category.val().name;
+            emphtml += empVal.val().name;
             emphtml += "</td>";
 
             //for emp description
             emphtml += "<td>";
-            emphtml += category.val().email;
+            emphtml += empVal.val().email;
             emphtml += "</td>";
 
             //for emp phone
             emphtml += "<td>";
-            emphtml += category.val().phone;
+            emphtml += empVal.val().phone;
             emphtml += "</td>";
 
-            //for delete category
-            emphtml += `<td> <button onclick='delCatFunction("${'/' + category.val().key}")' class='btn btn-danger'>Delete</button>`;
+            //for delete empVal
+            emphtml += `<td> <button onclick='deleteEmployee("${'/' + empVal.key}")' class='btn btn-danger'>Delete</button>`;
             emphtml += "</td>";
             emphtml += "</tr>";
 
@@ -656,20 +695,50 @@
           });
 
           $("#empTableBody").html(emphtml);
+        }else{
+          document.getElementById("tvTotalEmp").innerHTML = "0";
         }
 
       });
     }
 
+    function deleteEmployee(path) {
+      var result = confirm("Confirm Delete Employee");
+      if (result) {
+
+        firebase
+          .database()
+          .ref("Admins/" + path).remove().then(function () {
+            console.log("Employee Tasks Remove succeeded.");
+            // window.location.reload();
+          })
+          .catch(function (error) {
+            console.log("Employee Tasks Remove failed: " + error.message)
+          });
+
+        firebase
+          .database()
+          .ref("Employees/" + path).remove().then(function () {
+            console.log("Employee Remove succeeded.");
+            // window.location.reload();
+          })
+          .catch(function (error) {
+            console.log("Employee Remove failed: " + error.message)
+          });
+
+
+      }
+    }
+
     window.onload = displayAllEmp();
 
+    // display all completed tasks
     var dbComTask = firebase.database().ref("CompletedTasks");
-    dbComTask.on("value", function (snapshot) {
-      document.getElementById("tvTalCompletedTask").innerHTML = snapshot.numChildren();
+    dbComTask.on("value", function (snapshot) {    
       if (snapshot.exists()) {
+        document.getElementById("tvTalCompletedTask").innerHTML = snapshot.numChildren();
         var myhtml = "";
-        snapshot.forEach(function (dataC) {          
-          console.log("completed tasks" + dataC.val().name)
+        snapshot.forEach(function (dataC) {
           myhtml += "<tr>";
 
           //for client name
@@ -704,31 +773,45 @@
           myhtml += dataC.val().comment;
           myhtml += "</td>";
 
-          // play audio 
-          myhtml += `<td><button onclick='playAudio("${dataC.val().file}")' class='btn btn-danger'>PLay</button>`;
-          myhtml += "</td>";
+          // play audio           
+          myhtml += `<td> <audio src="${dataC.val().file}" controls> </td>`
 
+          // file link 
           myhtml += "<td>";
           myhtml += dataC.val().file;
           myhtml += "</td>";
 
-          //for category preview
+          //for empVal preview
           myhtml += "<td>";
           myhtml += dataC.val().action;
           myhtml += "</td>";
 
           //button for delete
-          myhtml += `<td><button onclick='deleteTask("${'/' + dataC.key}")' class='btn btn-danger'>Delete</button>`;
+          myhtml += `<td><button onclick='deleteCompleyedTask("${'/' + dataC.key}")' class='btn btn-danger'>Delete</button>`;
           myhtml += "</td>";
         });
         $("#CompleyedTaskBody").html(myhtml);
+      }else{
+        document.getElementById("tvTalCompletedTask").innerHTML = "0";
       }
     });
 
-    function playAudio(path) {
-      var a = new Audio(path);
-      a.play();
+    function deleteCompleyedTask(path) {
+      var result = confirm("Confirm Delete Task");
+      if (result) {
+        firebase
+          .database()
+          .ref("CompletedTasks/" + path).remove().then(function () {
+            console.log("Task delete succeeded.");
+            // window.location.reload();
+          })
+          .catch(function (error) {
+            console.log("Task Remove failed: " + error.message)
+          });
+      }
+
     }
+
 
     firebase.auth().onAuthStateChanged(function (user) {
       if (!user) {

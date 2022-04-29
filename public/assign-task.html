@@ -332,10 +332,10 @@
                             const { area, name, number, email } = item
 
                             if (!area || !name || !number || !email) {
-                                throw new Error(`Area, Email, phone and name are required. Error in row ${index + 2} in sheet ${sheetName}`)
+                                throw new Error(`Area, Name, Number and Email are required. Error in row ${index + 2} in sheet ${sheetName}`)
                             }
 
-                            return { action: 'Pending', area, name, number, email }
+                            return {area, name, number, email, action: 'Pending',}
                         });
                     } catch (err) {
                         alert(err.message);
@@ -384,7 +384,7 @@
 
             reader.readAsBinaryString(selectedFile);
 
-            console.log(selectedEmpUid);
+           // console.log(selectedEmpUid);
         }
 
         var validFileTypes = [".xlsx", ".xls"];

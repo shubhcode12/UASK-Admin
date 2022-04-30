@@ -781,9 +781,8 @@
           myhtml += dataC.val().file;
           myhtml += "</td>";
 
-          //for empVal preview
-          myhtml += "<td>";
-          myhtml += dataC.val().action;
+          //for task action
+          myhtml += `<td><p class='text-success'>${dataC.val().action}</p>`;
           myhtml += "</td>";
 
           //button for delete

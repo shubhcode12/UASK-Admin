@@ -733,7 +733,7 @@
     window.onload = displayAllEmp();
 
     // display all completed tasks
-    var dbComTask = firebase.database().ref("CompletedTasks");
+    var dbComTask = firebase.database().ref("CompletedTasks").limitToLast(10);
     dbComTask.on("value", function (snapshot) {    
       if (snapshot.exists()) {
         document.getElementById("tvTalCompletedTask").innerHTML = snapshot.numChildren();
